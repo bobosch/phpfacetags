@@ -1,5 +1,7 @@
 <?php
 class FaceTags {
+	$PHP_JPEG_Metadata_Toolkit='PHP_JPEG_Metadata_Toolkit/';
+
 	/**
 	 * This function creates all face thumbnails from a file name
 	 *
@@ -84,11 +86,21 @@ class FaceTags {
 	 * @return string
 	 */
 	public function getXMPTagFromFile($filename) {
-		$content=file_get_contents($filename);
-		$xmp_start=strpos($content, '<x:xmpmeta');
-		$xmp_end=strpos($content, '</x:xmpmeta>');
-		$xmp_length=$xmp_end - $xmp_start;
-		$xmp=substr($content, $xmp_start, $xmp_length + 12);
+		$PJMT=include_once $this->PHP_JPEG_Metadata_Toolkit.'JPEG.php';
+		if($PJMT) {
+			$headers=get_jpeg_header_data($filename);
+			foreach($headers as $header){
+				if($header['SegName']=='APP1' && substr($header['SegData'],0,28)=='http://ns.adobe.com/xap/1.0/'){
+					$xmp=substr($header['SegData'],29);
+				}
+			}
+		} else {
+			$content=file_get_contents($filename);
+			$xmp_start=strpos($content, '<x:xmpmeta');
+			$xmp_end=strpos($content, '</x:xmpmeta>');
+			$xmp_length=$xmp_end - $xmp_start;
+			$xmp=substr($content, $xmp_start, $xmp_length + 12);
+		}
 		
 		return $xmp;
 	}
